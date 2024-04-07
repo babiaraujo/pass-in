@@ -30,4 +30,4 @@ GET http://localhost:3333/attendees/4/check-in
 
 ###
 
-GET http://localhost:3333/events/81a3f6db-45bf-4a6f-b10c-bcaf8837ac43/attendees?query=diego
+GET http://localhost:3333/events/81a3f6db-45bf-4a6f-b10c-bcaf8837ac43/attendees?query=babi
