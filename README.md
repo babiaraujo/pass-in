@@ -33,10 +33,6 @@ O sistema fará um scan da credencial do participante para permitir a entrada no
 
 Nessa aplicação vamos utilizar banco de dados relacional (SQL). Para ambiente de desenvolvimento seguiremos com o SQLite pela facilidade do ambiente.
 
-### Diagrama ERD
-
-<img src=".github/erd.svg" width="600" alt="Diagrama ERD do banco de dados" />
-
 ### Estrutura do banco (SQL)
 
 ```sql
