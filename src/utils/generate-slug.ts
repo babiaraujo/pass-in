@@ -3,6 +3,7 @@ export function generateSlug(text: string): string {
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase()
-    .replace(/[^\w\s-]/g, "")
-    .replace(/\s+/g, "-");
+    .replace(/[^\w\s-]/g, "") 
+    .trim() 
+    .replace(/\s+/g, "-"); \
 }
