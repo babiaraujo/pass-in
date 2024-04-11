@@ -1,53 +1,52 @@
 import fastify from "fastify";
+import dotenv from "dotenv";
 
 import fastifySwagger from "@fastify/swagger";
 import fastifySwaggerUI from "@fastify/swagger-ui";
 import fastifyCors from "@fastify/cors";
 
-import { serializerCompiler, validatorCompiler, jsonSchemaTransform, ZodTypeProvider } from 'fastify-type-provider-zod'
-import { createEvent } from "./routes/create-event";
-import { registerForEvent } from "./routes/register-for-event";
-import { getEvent } from "./routes/get-event";
-import { getAttendeeBadge } from "./routes/get-attendee-badge";
-import { checkIn } from "./routes/check-in";
-import { getEventAttendees } from "./routes/get-event-attendees";
+import { serializerCompiler, validatorCompiler, jsonSchemaTransform, ZodTypeProvider } from 'fastify-type-provider-zod';
+import routes from "./routes"; // Supondo que você tenha um arquivo que exporta todas as rotas
 import { errorHandler } from "./error-handler";
 
-export const app = fastify().withTypeProvider<ZodTypeProvider>()
+dotenv.config();
+
+export const app = fastify({ logger: true }).withTypeProvider<ZodTypeProvider>();
 
 app.register(fastifyCors, {
   origin: '*',
-})
+});
 
 app.register(fastifySwagger, {
   swagger: {
     consumes: ['application/json'],
     produces: ['application/json'],
     info: {
-      title: 'pass.in',
-      description: 'Especificações da API para o back-end da aplicação pass.in construída durante o NLW Unite da Rocketseat.',
+      title: 'pass.in API',
+      description: 'API specifications for the pass.in application backend.',
       version: '1.0.0'
     },
   },
   transform: jsonSchemaTransform,
-})
+});
 
-app.register(fastifySwaggerUI, {
-  routePrefix: '/docs',
-})
+app.register(fastifySwaggerUI, { routePrefix: '/docs' });
 
 app.setValidatorCompiler(validatorCompiler);
 app.setSerializerCompiler(serializerCompiler);
 
-app.register(createEvent)
-app.register(registerForEvent)
-app.register(getEvent)
-app.register(getAttendeeBadge)
-app.register(checkIn)
-app.register(getEventAttendees)
+routes.forEach(route => app.register(route));
 
-app.setErrorHandler(errorHandler)
+app.setErrorHandler(errorHandler);
 
-app.listen({ port: 3333, host: '0.0.0.0' }).then(() => {
-  console.log('HTTP server running!')
-})
+const start = async () => {
+  try {
+    await app.listen({ port: process.env.PORT || 3333, host: '0.0.0.0' });
+    console.log('HTTP server running!');
+  } catch (err) {
+    app.log.error(err);
+    process.exit(1);
+  }
+};
+
+start();
