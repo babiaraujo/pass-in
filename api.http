@@ -1,14 +1,16 @@
+# Cria um novo evento
 POST http://localhost:3333/events
 Content-Type: application/json
 
 {
-  "title": 123,
-  "details": null,
+  "title": "Evento Teste",
+  "details": "Detalhes do evento teste",
   "maximumAttendees": 1
 }
 
 ###
 
+# Adiciona um participante ao evento
 POST http://localhost:3333/events/81a3f6db-45bf-4a6f-b10c-bcaf8837ac43/attendees
 Content-Type: application/json
 
@@ -19,15 +21,19 @@ Content-Type: application/json
 
 ###
 
+# Obtém informações sobre o evento
 GET http://localhost:3333/events/81a3f6db-45bf-4a6f-b10c-bcaf8837ac43
 
 ###
 
+# Obtém o crachá de um participante
 GET http://localhost:3333/attendees/3/badge
 ###
 
+# Realiza o check-in de um participante
 GET http://localhost:3333/attendees/4/check-in
 
 ###
 
+# Lista todos os participantes do evento que contenham "babi" no nome
 GET http://localhost:3333/events/81a3f6db-45bf-4a6f-b10c-bcaf8837ac43/attendees?query=babi
