@@ -3,38 +3,47 @@ import { ZodTypeProvider } from "fastify-type-provider-zod";
 import { z } from "zod";
 import { prisma } from "../lib/prisma";
 
+const getEventAttendeesSchema = {
+  summary: 'Get event attendees',
+  tags: ['events'],
+  params: z.object({
+    eventId: z.string().uuid(),
+  }),
+  querystring: z.object({
+    query: z.string().nullish(),
+    pageIndex: z.string().nullish().default('0').transform(Number),
+  }),
+  response: {
+    200: z.object({
+      attendees: z.array(
+        z.object({
+          id: z.number(),
+          name: z.string(),
+          email: z.string().email(),
+          createdAt: z.date(),
+          checkedInAt: z.date().nullable(),
+        })
+      ),
+      total: z.number(),
+    }),
+  },
+};
+
 export async function getEventAttendees(app: FastifyInstance) {
   app
     .withTypeProvider<ZodTypeProvider>()
-    .get('/events/:eventId/attendees', {
-      schema: {
-        summary: 'Get event attendees',
-        tags: ['events'],
-        params: z.object({
-          eventId: z.string().uuid(),
-        }),
-        querystring: z.object({
-          query: z.string().nullish(),
-          pageIndex: z.string().nullish().default('0').transform(Number),
-        }),
-        response: {
-          200: z.object({
-            attendees: z.array(
-              z.object({
-                id: z.number(),
-                name: z.string(),
-                email: z.string().email(),
-                createdAt: z.date(),
-                checkedInAt: z.date().nullable(),
-              })
-            ),
-            total: z.number(),
-          }),
-        },
-      }
-    }, async (request, reply) => {
-      const { eventId } = request.params
-      const { pageIndex, query } = request.query
+    .get('/events/:eventId/attendees', { schema: getEventAttendeesSchema }, async (request, reply) => {
+      const { eventId } = request.params;
+      const { pageIndex, query } = request.query;
+
+      const whereCondition = query ? {
+        eventId,
+        name: {
+          contains: query,
+        }
+      } : {
+        eventId,
+      };
 
       const [attendees, total] = await Promise.all([
         prisma.attendee.findMany({
@@ -49,14 +58,7 @@ export async function getEventAttendees(app: FastifyInstance) {
               }
             }
           },
-          where: query ? {
-            eventId,
-            name: {
-              contains: query,
-            }
-          } : {
-            eventId,
-          },
+          where: whereCondition,
           take: 10,
           skip: pageIndex * 10,
           orderBy: {
@@ -64,28 +66,21 @@ export async function getEventAttendees(app: FastifyInstance) {
           }
         }),
         prisma.attendee.count({
-          where: query ? {
-            eventId,
-            name: {
-              contains: query,
-            }
-          } : {
-            eventId,
-          },
+          where: whereCondition,
         })
-      ])
+      ]);
 
-      return reply.send({ 
-        attendees: attendees.map(attendee => {
-          return {
-            id: attendee.id,
-            name: attendee.name,
-            email: attendee.email,
-            createdAt: attendee.createdAt,
-            checkedInAt: attendee.checkIn?.createdAt ?? null,
-          }
-        }),
+      const formattedAttendees = attendees.map(attendee => ({
+        id: attendee.id,
+        name: attendee.name,
+        email: attendee.email,
+        createdAt: attendee.createdAt,
+        checkedInAt: attendee.checkIn?.createdAt ?? null,
+      }));
+
+      return reply.send({
+        attendees: formattedAttendees,
         total,
-      })
-    })
+      });
+    });
 }
