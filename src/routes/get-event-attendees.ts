@@ -10,8 +10,8 @@ const getEventAttendeesSchema = {
     eventId: z.string().uuid(),
   }),
   querystring: z.object({
-    query: z.string().nullish(),
-    pageIndex: z.string().nullish().default('0').transform(Number),
+    query: z.string().optional(),
+    pageIndex: z.string().optional().default('0').transform(Number),
   }),
   response: {
     200: z.object({
@@ -36,13 +36,9 @@ export async function getEventAttendees(app: FastifyInstance) {
       const { eventId } = request.params;
       const { pageIndex, query } = request.query;
 
-      const whereCondition = query ? {
+      const whereCondition = {
         eventId,
-        name: {
-          contains: query,
-        }
-      } : {
-        eventId,
+        ...(query && { name: { contains: query } }),
       };
 
       const [attendees, total] = await Promise.all([
@@ -62,12 +58,12 @@ export async function getEventAttendees(app: FastifyInstance) {
           take: 10,
           skip: pageIndex * 10,
           orderBy: {
-            createdAt: 'desc'
-          }
+            createdAt: 'desc',
+          },
         }),
         prisma.attendee.count({
           where: whereCondition,
-        })
+        }),
       ]);
 
       const formattedAttendees = attendees.map(attendee => ({
